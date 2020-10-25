@@ -6,10 +6,10 @@ import time
 import io
 import requests
 from discord.ext import commands
-from config.config import bot_token
+from config.config import bot_token, bot_prefix
 print(bot_token)
 
-client = commands.Bot(command_prefix='!')
+client = commands.Bot(command_prefix=bot_prefix)
 client.remove_command('help')
 
 @client.event
@@ -31,4 +31,6 @@ async def unload(ctx, extension):
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
+
+client.run(bot_token)
 

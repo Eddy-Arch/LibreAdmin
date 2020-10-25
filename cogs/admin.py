@@ -8,22 +8,54 @@ client = commands.Bot(command_prefix = '!')
 
 class Admin(commands.Cog):
 
-    def __init__(self, client):  
-        self.blacklist = genfromtxt('./config/blacklist.csv', delimiter=',')                      
+    def __init__(self, client):
+        self.blacklist = genfromtxt('./config/blacklist.csv', delimiter=',')
         self.client = client
 
     @commands.command()
-    @commands.has_role('Bot Commander')
+    @commands.has_role(pass_context=True)
     async def kick(self, ctx, member : discord.Member, *, reason=None):
-        await member.kick(reason=reason)
-        await ctx.send(f"`{member}` has been kicked.")
+        if reason == None:
+            await ctx.send("you must enter a reason to kick.")
+        else:
+            try:
+                if ctx.message.author.guild_permissions.administrator or ctx.message.author.guild_permissions.ban_members:
+                    embed = discord.Embed(
+                        colour=discord.Color.red()
+                    )
+                    embed.add_field(name="KICKED",
+                                    value=f'You have been kicked from `` {ctx.guild.name} `` by  `` {ctx.message.author} `` for  `` {reason} ``',
+                                    inline=False)
+                    await member.send(embed=embed)
+                    reason = reason
+                    await ctx.guild.kick(member)
+                    embed = discord.Embed(title="User kicked was kicked for {}".format(reason),
+                                          description="**{}** has been kicked!".format(member),
+                                          color=discord.Color.green())
+                    embed.set_author(name=ctx.message.author, icon_url=ctx.message.author.avatar_url)
+
+                    await ctx.send(embed=embed)
+                    author = ctx.message.author
+                    channel =client.get_channel(admin_actions_log_channel_id)
+                    await channel.send(f"{author} just kicked {member} for {reason}")
+                else:
+                    embed = discord.Embed(title="Permission Denied.",
+                                          description="You don't have permission to use this command.",
+                                          color=discord.Color.red())
+                    await ctx.send(embed=embed)
+            except:
+                embed = discord.Embed(title="Permission Denied.",
+                                      description="Bot doesn't have correct permissions, or bot can't kick this user.",
+                                      color=discord.Color.red())
+                await ctx.send(embed=embed)
+
 
     @commands.command()
     @commands.has_role('Bot Commander')
     async def remove(self, ctx, role: discord.Role, user: discord.Member):
         await user.remove_roles(role)
         await ctx.send(f"Removed `{role}` role from `{user.name}`")
-    
+
     @commands.command()
     @commands.has_role('Bot Commander')
     async def add(self, ctx, role: discord.Role, user: discord.Member):
